@@ -1,48 +1,40 @@
 name: Build Fabric Client
 
-on:
-workflow_dispatch:
+on: [workflow_dispatch]
 
 jobs:
 build:
 runs-on: ubuntu-latest
 steps:
-- name: Checkout source
-uses: actions/checkout@v4
+- uses: actions/checkout@v4
 
-  - name: Set up Java 21
-    uses: actions/setup-java@v4
+  - uses: actions/setup-java@v4
     with:
       distribution: temurin
       java-version: "21"
 
-  - name: Check ZIP
-    run: |
-      ls -la
-      test -f Zalith-ARM64-Source-Fix.zip
+  - name: List repository files
+    run: ls -la
 
-  - name: Extract source
+  - name: Extract source ZIP
     run: unzip -o Zalith-ARM64-Source-Fix.zip -d source
 
-  - name: Find Gradle wrapper
-    run: |
-      find source -name gradlew -type f
-      find source -name build.gradle -type f
-      find source -name build.gradle.kts -type f
+  - name: Locate Gradle wrapper
+    run: find source -name gradlew -type f
 
-  - name: Build JAR
+  - name: Build
+    shell: bash
     run: |
       GRADLEW="$(find source -name gradlew -type f | head -n 1)"
       if [ -z "$GRADLEW" ]; then
-        echo "ERROR: No gradlew found in ZIP"
+        echo "ERROR: gradlew not found"
         exit 1
       fi
       cd "$(dirname "$GRADLEW")"
-      chmod +x ./gradlew
+      chmod +x gradlew
       ./gradlew build
 
-  - name: Upload JAR
-    uses: actions/upload-artifact@v4
+  - uses: actions/upload-artifact@v4
     with:
       name: Fabric-Client-JAR
       path: source/**/build/libs/*.jar
